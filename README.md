@@ -1,46 +1,48 @@
 # ACHA Climate Card
 
-Cartão Lovelace para controlar ar condicionado no Home Assistant, com o aspeto da app **Daikin Onecta**:
-mostrador circular grande, cores por modo, seletores em folha deslizante (bottom sheet) e uma unidade interior
-animada com o fluxo de ar. Funciona com qualquer entidade `climate`, e tem perfis dedicados para **Daikin (local)**
-e **Daikin Onecta**.
+A Lovelace card for controlling air conditioners in Home Assistant, inspired by the **Daikin Onecta** app:
+a large circular dial, per-mode colours, bottom-sheet pickers and an animated indoor unit with live airflow.
+It works with any `climate` entity and ships dedicated profiles for **Daikin (local)** and **Daikin Onecta**.
 
-- Vários ACs num só cartão: comutador em "pílulas" com deslize (swipe) entre unidades, ou disposição empilhada / em grelha.
-- Mostrador de 270° com arrastar, teclado, valor animado e modo de intervalo (`heat_cool` com mínimo/máximo).
-- Botões − / + com repetição ao manter premido; os pedidos são agrupados (700 ms) para poupar a quota da cloud Onecta.
-- Mosaicos para Modo, Velocidade, Oscilação vertical/horizontal e Modo especial, mais atalhos Econo / Potente.
-- Entidades extra (Streamer, horários, botões, sensores) como mosaicos. Toque longo abre "Mais informações".
-- Temas escuro (vidro) e claro (estilo Onecta), `auto` segue o modo escuro do Home Assistant.
-- Português (pt-PT) e inglês. Respeita `prefers-reduced-motion`. Sem dependências externas.
+**[▶ Live demo](https://pedrogrilo.github.io/ac-ha-card/demo/)**
 
 ## Preview
 
 <img width="297" height="605" alt="image" src="https://github.com/user-attachments/assets/d6b3c6cb-bc26-4ccf-8370-faad986951e0" />
 <img width="308" height="607" alt="image" src="https://github.com/user-attachments/assets/69a0b687-6c18-4ab8-9842-dd30b9479d02" />
 
+## Features
 
-## Instalação
+- Several ACs in one card: pill switcher with swipe between units, or stacked / grid layouts.
+- 270° dial with drag, keyboard support, animated value and range mode (`heat_cool` with low/high).
+- − / + buttons with hold-to-repeat; requests are debounced (700 ms) to save the Onecta cloud quota.
+- Tiles for Mode, Fan speed, Vertical/Horizontal swing and Preset, plus Econo / Powerful shortcuts.
+- Extra entities (Streamer, schedules, buttons, sensors) as tiles. Long-press opens "More info".
+- Dark (glass) and light (Onecta-style) themes; `auto` follows Home Assistant's dark mode.
+- Portuguese (pt-PT) and English. Respects `prefers-reduced-motion`. No external dependencies.
 
-### HACS (repositório personalizado)
-1. HACS → menu ⋮ → **Repositórios personalizados** → adicione o URL deste repositório, categoria **Dashboard**.
-2. Instale **ACHA Climate Card** e recarregue o browser.
+## Installation
+
+### HACS (custom repository)
+1. HACS → ⋮ menu → **Custom repositories** → add this repository's URL, category **Dashboard**.
+2. Install **ACHA Climate Card** and reload the browser.
 
 ### Manual
-1. Corra `npm run build` (ou use o ficheiro já gerado) e copie `dist/acha-card.js` para `/config/www/acha-card.js`.
-2. Em **Definições → Painéis → ⋮ → Recursos**, adicione `/local/acha-card.js` com o tipo **Módulo JavaScript**.
-3. Recarregue o browser (Ctrl+F5).
+1. Run `npm run build` (or use the prebuilt file) and copy `dist/acha-card.js` to `/config/www/acha-card.js`.
+2. In **Settings → Dashboards → ⋮ → Resources**, add `/local/acha-card.js` as a **JavaScript module**.
+3. Reload the browser (Ctrl+F5).
 
-## Configuração
+## Configuration
 
-O editor visual cobre todas as opções. Em YAML:
+The visual editor covers every option. In YAML:
 
 ```yaml
 type: custom:acha-card
-title: Climatização          # opcional
+title: Climate               # optional
 profile: auto                # auto | daikin | daikin_onecta | generic
 theme: auto                  # auto | dark | light
 layout: tabs                 # tabs | stack | grid
-show_unit: true              # unidade interior animada
+show_unit: true              # animated indoor unit
 language: auto               # auto | pt | en
 entities:
   - entity: climate.ac_sala
@@ -61,73 +63,75 @@ entities:
     labels:
       fan_mode: { Silence: Noite }
     colors: { cool: '#3fa9f5' }
-  - climate.ac_quarto        # também aceita só o id
+  - climate.ac_quarto        # a plain entity id also works
 ```
 
-Também pode usar `entity: climate.ac_sala` em vez de `entities` quando há só um AC.
+You can also use `entity: climate.ac_sala` instead of `entities` when there is only one AC.
 
-### Opções do cartão
+### Card options
 
-| Opção | Valores | Por omissão | Descrição |
+| Option | Values | Default | Description |
 |---|---|---|---|
-| `title` | texto | "Climatização" (com 2+ ACs) | Título do cabeçalho |
-| `profile` | `auto`, `daikin`, `daikin_onecta`, `generic` | `auto` | Perfil de marca (etiquetas, ícones, ordem dos modos). `auto` deteta pelo registo de entidades e pelos atributos |
-| `theme` | `auto`, `dark`, `light` | `auto` | `auto` segue `hass.themes.darkMode` |
-| `layout` | `tabs`, `stack`, `grid` | `tabs` | `tabs`: um painel de cada vez com pílulas e deslize; `stack`: todos empilhados; `grid`: lado a lado |
-| `show_unit` | `true` / `false` | `true` | Mostra a unidade interior animada |
-| `language` | `auto`, `pt`, `en` | `auto` | `auto` usa o idioma do Home Assistant |
+| `title` | text | "Climatização" (with 2+ ACs) | Header title |
+| `profile` | `auto`, `daikin`, `daikin_onecta`, `generic` | `auto` | Brand profile (labels, icons, mode order). `auto` detects from the entity registry and attributes |
+| `theme` | `auto`, `dark`, `light` | `auto` | `auto` follows `hass.themes.darkMode` |
+| `layout` | `tabs`, `stack`, `grid` | `tabs` | `tabs`: one panel at a time with pills and swipe; `stack`: all stacked; `grid`: side by side |
+| `show_unit` | `true` / `false` | `true` | Show the animated indoor unit |
+| `language` | `auto`, `pt`, `en` | `auto` | `auto` uses Home Assistant's language |
 
-### Opções por AC (`entities[]`)
+### Per-AC options (`entities[]`)
 
-| Opção | Descrição |
+| Option | Description |
 |---|---|
-| `entity` | Entidade `climate` (obrigatória) |
-| `name`, `icon` | Nome e ícone (`mdi:...`) |
-| `indoor_temperature` | Sensor de temperatura interior (senão usa `current_temperature`) |
-| `outdoor_temperature` | Sensor de temperatura exterior |
-| `humidity` | Sensor de humidade (senão usa `current_humidity`) |
-| `power` | Sensor de potência (W/kW) ou energia (kWh), mostrado no rodapé |
-| `extras` | Lista de entidades extra: `switch`, `input_boolean`, `fan`, `light` (alternar), `select`/`input_select` (lista), `button`/`input_button`/`script`/`scene` (premir), `sensor`/`binary_sensor` (só leitura) |
-| `hide` | Ocultar controlos: `modes`, `fan`, `swing`, `swing_horizontal`, `preset`, `power_btn` |
-| `min_temp`, `max_temp`, `step` | Limites e incremento do mostrador (senão vêm dos atributos e do perfil) |
-| `labels` | Etiquetas próprias por valor bruto: `labels: { fan_mode: { Silence: Noite } }` |
-| `icons` | Ícones próprios por valor bruto: `icons: { preset_mode: { eco: mdi:leaf } }` |
-| `colors` | Cores por modo: `colors: { cool: '#3fa9f5', heat: '#ff8a3d' }` |
-| `profile` | Perfil só para este AC |
+| `entity` | `climate` entity (required) |
+| `name`, `icon` | Name and icon (`mdi:...`) |
+| `indoor_temperature` | Indoor temperature sensor (otherwise `current_temperature`) |
+| `outdoor_temperature` | Outdoor temperature sensor |
+| `humidity` | Humidity sensor (otherwise `current_humidity`) |
+| `power` | Power (W/kW) or energy (kWh) sensor, shown in the footer |
+| `extras` | Extra entities: `switch`, `input_boolean`, `fan`, `light` (toggle), `select`/`input_select` (list), `button`/`input_button`/`script`/`scene` (press), `sensor`/`binary_sensor` (read-only) |
+| `hide` | Hide controls: `modes`, `fan`, `swing`, `swing_horizontal`, `preset`, `power_btn` |
+| `min_temp`, `max_temp`, `step` | Dial limits and step (otherwise from attributes and profile) |
+| `labels` | Custom labels per raw value: `labels: { fan_mode: { Silence: Night } }` |
+| `icons` | Custom icons per raw value: `icons: { preset_mode: { eco: mdi:leaf } }` |
+| `colors` | Colours per mode: `colors: { cool: '#3fa9f5', heat: '#ff8a3d' }` |
+| `profile` | Profile for this AC only |
 
-Os valores são sempre enviados ao Home Assistant exatamente como aparecem nas listas da entidade
-(`fan_modes`, `swing_modes`, …). A normalização serve só para etiquetas e ícones.
+Values are always sent to Home Assistant exactly as they appear in the entity's lists
+(`fan_modes`, `swing_modes`, …). Normalisation is only used for labels and icons.
 
 ## Daikin
 
-- **Daikin local** (integração `daikin`): velocidades `Auto`, `Silence`, `1`–`5`; oscilação `Off`, `Vertical`,
-  `Horizontal`, `3D`; modos especiais `away`, `eco`, `boost`. O Streamer é `switch.<ac>_streamer`.
-- **Daikin Onecta** (`daikin_onecta`, HACS): valores em minúsculas (`quiet`, `stop`, `swing`, `windnice`),
-  oscilação horizontal separada, e as funcionalidades mudam com o modo (em Desumidificar não há temperatura nem
-  velocidade, e o cartão adapta-se). O Streamer é `switch.<ac>_climatecontrol_streamer_mode`.
-- A cloud Onecta tem limite diário de pedidos: o cartão agrupa as alterações de temperatura e mostra o valor
-  pedido de imediato (otimista) enquanto espera pela confirmação.
+- **Daikin local** (`daikin` integration): fan speeds `Auto`, `Silence`, `1`–`5`; swing `Off`, `Vertical`,
+  `Horizontal`, `3D`; presets `away`, `eco`, `boost`. Streamer is `switch.<ac>_streamer`.
+- **Daikin Onecta** (`daikin_onecta`, HACS): lowercase values (`quiet`, `stop`, `swing`, `windnice`),
+  separate horizontal swing, and features change with the mode (Dry has no temperature or fan speed; the card
+  adapts). Streamer is `switch.<ac>_climatecontrol_streamer_mode`.
+- The Onecta cloud has a daily request limit: the card batches temperature changes and shows the requested
+  value immediately (optimistic) while waiting for confirmation.
 
-Mais detalhes em [`docs/DAIKIN_NOTES.md`](docs/DAIKIN_NOTES.md).
+More details in [`docs/DAIKIN_NOTES.md`](docs/DAIKIN_NOTES.md).
 
-## Desenvolvimento
+## Development
 
-Sem dependências: só Node ≥ 18.
+No dependencies, just Node ≥ 18.
 
 ```bash
-npm run build     # junta src/*.js em dist/acha-card.js (IIFE) e valida com node --check
-npm run check     # o mesmo, validando também cada ficheiro de src/
-npm run demo      # servidor local em http://localhost:8765/demo/
+npm run build     # bundles src/*.js into dist/acha-card.js (IIFE) and validates with node --check
+npm run check     # same, also validating each file in src/
+npm run demo      # local server at http://localhost:8765/demo/
 ```
 
-A demo (`demo/index.html`) usa um `hass` simulado com dois ACs (Sala: Daikin local a arrefecer a 22 °C;
-Quarto: Onecta desligado a 21 °C). Tem barra para mudar tema, disposição, idioma, largura, mostrar a unidade e pôr
-o Quarto indisponível, um registo das chamadas de serviço e o editor visual. Os ícones MDI vêm de
-`cdn.jsdelivr.net` (`@mdi/js`). Acrescente `?dist=1` ao URL para testar o ficheiro final em vez de `src/`.
+The demo (`demo/index.html`) uses a mocked `hass` with two ACs (Sala: Daikin local cooling at 22 °C;
+Quarto: Onecta off at 21 °C). Its toolbar switches theme, layout, language, width, unit visibility and can make
+Quarto unavailable; it also shows a service-call log and the visual editor. MDI icons come from
+`cdn.jsdelivr.net` (`@mdi/js`). Add `?dist=1` to the URL to test the bundled file instead of `src/`.
 
-Arquitetura e regras de empacotamento: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) e
+The live demo is deployed to GitHub Pages by `.github/workflows/pages.yml` on every push to `main`.
+
+Architecture and bundling rules: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
 [`docs/FILE_SPECS.md`](docs/FILE_SPECS.md).
 
-## Licença
+## License
 
 MIT
