@@ -49,7 +49,7 @@ svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible
 .s1 { stop-color: color-mix(in srgb, var(--_d-accent) 55%, #fff); transition: stop-color 600ms var(--_d-ease); }
 .cur { fill: var(--_d-text); opacity: .9; transition: opacity 300ms var(--_d-ease); }
 .cur-ring { fill: none; stroke: var(--_d-text); stroke-width: 1.5; opacity: .28; }
-.hit { fill: none; stroke: transparent; stroke-width: 58; stroke-linecap: round; pointer-events: stroke; touch-action: none; cursor: pointer; }
+.hit { fill: none; stroke: transparent; stroke-width: 36; stroke-linecap: round; pointer-events: stroke; touch-action: none; cursor: pointer; }
 .thumb { cursor: grab; touch-action: none; outline: none; transition: opacity 300ms var(--_d-ease); }
 .thumb.grab { cursor: grabbing; }
 .knob {
@@ -376,6 +376,24 @@ export class AchaDial extends HTMLElement {
     return clamp(roundToStep(v, this._p.step), lo, hi);
   }
 
+  /**
+   * Grid used to *display* values: the step when the setpoints sit on it, else the finest of 0.5 / 0.1 they
+   * fit (HA core daikin reports step 1 but holds 22.5). Snapping to `step` stays in drag / keyboard only.
+   */
+  _dispStep() {
+    const p = this._p;
+    const vals = (p.dual ? [p.low, p.high] : [p.value]).filter((v) => v !== null);
+    const on = (g) => vals.every((v) => Math.abs(roundToStep(v, g) - v) < 1e-6);
+    for (const g of [p.step, 1, 0.5, 0.1]) if (g <= p.step && on(g)) return g;
+    return Math.min(p.step, 0.1);
+  }
+
+  /** Display value on the display grid (no clamping to the step grid). */
+  _disp(v, ds) {
+    const [lo, hi] = this._range();
+    return clamp(roundToStep(v, ds), lo, hi);
+  }
+
   // ---------------------------------------------------------------- tween (arc + count-up number)
   _targets() {
     const [lo, hi] = this._range();
@@ -493,18 +511,29 @@ export class AchaDial extends HTMLElement {
     }
 
     // centre
-    const step = p.step;
+    const ds = this._dispStep();
+    // Fractional grids keep a stable decimal slot ('22.0' / '22.5') so the big integer never shifts sideways.
+    const fracGrid = Math.abs(ds % 1) > 1e-9;
+    const fmt = (v) => {
+      const ft = formatTemp(v === null ? null : this._disp(v, ds), ds);
+      if (fracGrid && ft.value !== null) {
+        const n = (String(ds).split('.')[1] || '0').length;
+        ft.dec = '.' + ft.dec.slice(1).padEnd(n, '0');
+        ft.text = ft.int + ft.dec;
+      }
+      return ft;
+    };
     const setText = (node, txt) => {
       const v = txt === null || txt === undefined ? '' : String(txt);
       if (node.textContent !== v) node.textContent = v;
     };
     setText(el.label, p.label);
     if (dual) {
-      setText(el.lo, formatTemp(this._snap(s.low), step).text);
-      setText(el.hi, formatTemp(this._snap(s.high), step).text);
+      setText(el.lo, fmt(s.low).text);
+      setText(el.hi, fmt(s.high).text);
       setText(el.u, p.unit);
     } else {
-      const ft = formatTemp(s.value === null ? null : this._snap(s.value), step);
+      const ft = fmt(s.value);
       setText(el.int, ft.int);
       setText(el.dec, ft.dec);
       setText(el.unit, s.value === null ? '' : p.unit);
@@ -524,8 +553,8 @@ export class AchaDial extends HTMLElement {
     // a11y
     const [lo, hi] = this._range();
     const aria = (g, val, which) => {
-      const now = val === null ? '' : String(this._snap(val));
-      const txt = val === null ? '--' : formatTemp(this._snap(val), step).text + ' ' + p.unit;
+      const now = val === null ? '' : String(this._disp(val, ds));
+      const txt = val === null ? '--' : formatTemp(this._disp(val, ds), ds).text + ' ' + p.unit;
       const name = [p.name, which].filter(Boolean).join(' · ') || p.label || 'Setpoint';
       const attrs = {
         'aria-valuemin': String(lo),
@@ -580,21 +609,69 @@ export class AchaDial extends HTMLElement {
         which = dl < dh || (dl === dh && deg0 < this._angleOf(p.low)) ? 'low' : 'high';
       }
     }
-    this._drag = { id: ev.pointerId, which, start: { value: p.value, low: p.low, high: p.high }, lastDeg: null };
+    // Touch on the ring (not a thumb) is only *armed*: it must move along the ring to drag, or be a clean tap.
+    // A swipe that merely starts on the ring never jumps the setpoint.
+    const armed = ev.pointerType === 'touch' && ev.currentTarget === this._el.hit;
+    this._drag = { id: ev.pointerId, which, start: { value: p.value, low: p.low, high: p.high }, lastDeg: null, armed, x0: ev.clientX, y0: ev.clientY };
     try {
       this._el.svg.setPointerCapture(ev.pointerId);
     } catch (e) {
       /* capture unsupported */
     }
-    const thumb = which === 'high' ? this._el.t1 : this._el.t0;
-    thumb.classList.add('grab');
+    if (armed) return;
+    this._grab();
     this._dragTo(this._degFromEvent(ev));
+  }
+
+  _grab() {
+    const d = this._drag;
+    if (!d) return;
+    d.armed = false;
+    (d.which === 'high' ? this._el.t1 : this._el.t0).classList.add('grab');
+  }
+
+  /** Armed touch: 'drag' once it moved > 8px along the ring, 'abort' when it went mostly radial, else null. */
+  _armedIntent(ev) {
+    const d = this._drag;
+    const rect = this._el.svg.getBoundingClientRect();
+    const rx = d.x0 - (rect.left + rect.width / 2);
+    const ry = d.y0 - (rect.top + rect.height / 2);
+    const len = Math.hypot(rx, ry) || 1;
+    const mx = ev.clientX - d.x0;
+    const my = ev.clientY - d.y0;
+    const radial = Math.abs((mx * rx + my * ry) / len);
+    const tangential = Math.abs((mx * ry - my * rx) / len);
+    if (tangential > 8 && tangential >= radial) return 'drag';
+    if (radial > 12) return 'abort';
+    return null;
+  }
+
+  _cancelDrag() {
+    const d = this._drag;
+    this._drag = null;
+    if (!d) return;
+    try {
+      if (this._el.svg.hasPointerCapture && this._el.svg.hasPointerCapture(d.id)) this._el.svg.releasePointerCapture(d.id);
+    } catch (e) {
+      /* already released */
+    }
+    this._el.t0.classList.remove('grab');
+    this._el.t1.classList.remove('grab');
   }
 
   _onMove(ev) {
     const d = this._drag;
     if (!d || ev.pointerId !== d.id) return;
     if (ev.cancelable) ev.preventDefault();
+    if (d.armed) {
+      const intent = this._armedIntent(ev);
+      if (intent === 'abort') {
+        this._cancelDrag();
+        return;
+      }
+      if (intent !== 'drag') return;
+      this._grab();
+    }
     const deg = this._degFromEvent(ev);
     if (deg !== null) this._dragTo(deg);
   }
@@ -622,6 +699,15 @@ export class AchaDial extends HTMLElement {
   _onUp(ev) {
     const d = this._drag;
     if (!d || (ev && ev.pointerId !== d.id)) return;
+    if (d.armed) {
+      // never moved along the ring: a clean tap sets the value there; a cancelled gesture changes nothing
+      if (!ev || ev.type !== 'pointerup') {
+        this._cancelDrag();
+        return;
+      }
+      this._grab();
+      this._dragTo(this._degFromEvent(ev));
+    }
     this._drag = null;
     try {
       if (this._el.svg.hasPointerCapture && this._el.svg.hasPointerCapture(d.id)) this._el.svg.releasePointerCapture(d.id);
@@ -644,21 +730,26 @@ export class AchaDial extends HTMLElement {
     const cur = p[which];
     if (cur === null) return;
     const [lo, hi] = this._range();
+    // n grid steps strictly in one direction from cur (an off-grid 22.5 with step 1: up → 23, down → 22)
+    const move = (n) => {
+      const k = n > 0 ? Math.floor(cur / p.step + 1e-9) + n : Math.ceil(cur / p.step - 1e-9) + n;
+      return k * p.step;
+    };
     let next = null;
     switch (ev.key) {
       case 'ArrowUp':
       case 'ArrowRight':
-        next = cur + p.step;
+        next = move(1);
         break;
       case 'ArrowDown':
       case 'ArrowLeft':
-        next = cur - p.step;
+        next = move(-1);
         break;
       case 'PageUp':
-        next = cur + p.step * 4;
+        next = move(4);
         break;
       case 'PageDown':
-        next = cur - p.step * 4;
+        next = move(-4);
         break;
       case 'Home':
         next = lo;

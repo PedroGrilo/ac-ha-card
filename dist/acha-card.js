@@ -1,4 +1,4 @@
-/*! ACHA Climate Card v1.0.0 | custom:acha-card for Home Assistant | MIT | built 2026-10-11T23:55:26.342Z */
+/*! ACHA Climate Card v1.0.0 | custom:acha-card for Home Assistant | MIT | built 2026-10-12T00:15:05.315Z */
 (function () {
 'use strict';
 
@@ -1148,6 +1148,7 @@ const _styles_TOKENS = `
 }
 
 :host([data-theme="light"]) {
+  --acha-sheet-backdrop: rgba(30, 40, 60, .22);
   --acha-bg: rgba(248, 250, 253, .80);
   --acha-bg-grad: linear-gradient(160deg, rgba(255, 255, 255, .92) 0%, rgba(244, 247, 252, .84) 55%, rgba(232, 237, 245, .86) 100%);
   --acha-surface: rgba(255, 255, 255, .72);
@@ -1377,7 +1378,7 @@ const _styles_CARD_SWITCHER = `
   flex: 0 0 100%;
   min-width: 0;
   padding: 0 4px;
-  transition: opacity 420ms var(--acha-ease), transform 560ms var(--acha-spring), filter 420ms var(--acha-ease);
+  transition: opacity 420ms var(--acha-ease), transform 560ms var(--acha-spring), filter 420ms var(--acha-ease), --acha-accent 600ms var(--acha-ease);
 }
 .layout-tabs .acha-track > acha-panel:not([active]) { opacity: .35; transform: scale(.96); filter: saturate(.6); }
 
@@ -1388,11 +1389,11 @@ const _styles_CARD_SWITCHER = `
 .layout-stack .acha-track > acha-panel, .layout-grid .acha-track > acha-panel { padding: 0; opacity: 1; transform: none; filter: none; }
 .layout-grid .acha-track {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
   gap: 14px;
 }
 .layout-stack .acha-track > acha-panel, .layout-grid .acha-track > acha-panel {
-  animation: acha-fade-up 520ms var(--acha-ease) both;
+  animation: acha-fade-up 520ms var(--acha-ease) backwards;
 }
 .layout-stack .acha-track > acha-panel:nth-child(2), .layout-grid .acha-track > acha-panel:nth-child(2) { animation-delay: 70ms; }
 .layout-stack .acha-track > acha-panel:nth-child(3), .layout-grid .acha-track > acha-panel:nth-child(3) { animation-delay: 140ms; }
@@ -1446,7 +1447,6 @@ ha-icon { display: inline-flex; flex: none; }
   content: "";
   position: absolute;
   border-radius: 50%;
-  filter: blur(40px);
   transition: background 600ms var(--acha-ease), opacity 800ms var(--acha-ease);
 }
 .acha-ambient::before {
@@ -1459,8 +1459,11 @@ ha-icon { display: inline-flex; flex: none; }
   background: radial-gradient(closest-side, color-mix(in srgb, var(--acha-accent) calc(var(--acha-glow-strength) * 35%), transparent), transparent 70%);
   opacity: 0;
 }
-:host([on]) .acha-ambient::before, .is-on .acha-ambient::before { opacity: 1; animation: acha-breathe 6s ease-in-out infinite; }
-:host([on]) .acha-ambient::after, .is-on .acha-ambient::after { opacity: .8; animation: acha-breathe 8s ease-in-out -3s infinite; }
+:host([on]) .acha-ambient::before, .is-on .acha-ambient::before { opacity: 1; }
+:host([on]) .acha-ambient::after, .is-on .acha-ambient::after { opacity: .8; }
+/* breathe only on the visible panel (tabs: off-screen panels are inert and lack [active]) */
+:host([on][active]) .acha-ambient::before { animation: acha-breathe 6s ease-in-out infinite; }
+:host([on][active]) .acha-ambient::after { animation: acha-breathe 8s ease-in-out -3s infinite; }
 
 .acha-panel {
   position: relative;
@@ -1573,7 +1576,7 @@ const _styles_PANEL_HERO = `
   width: 100%;
   max-width: 340px;
   margin-bottom: -18px;
-  animation: acha-fade-up 600ms var(--acha-ease) both;
+  animation: acha-fade-up 600ms var(--acha-ease) backwards;
 }
 .acha-unit-wrap acha-unit { display: block; width: 100%; }
 .acha-dial-wrap {
@@ -1660,7 +1663,7 @@ const _styles_PANEL_HERO = `
   border: 1px solid var(--acha-border);
   font-size: 13px;
   white-space: nowrap;
-  animation: acha-fade-up 480ms var(--acha-ease) both;
+  animation: acha-fade-up 480ms var(--acha-ease) backwards;
   --mdc-icon-size: 17px;
 }
 .acha-chip[hidden] { display: none; }
@@ -1682,6 +1685,7 @@ const _styles_PANEL_HERO = `
 .acha-toggle {
   position: relative;
   overflow: hidden;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -1734,7 +1738,7 @@ const _styles_PANEL_TILES = `
   user-select: none;
   -webkit-user-select: none;
   box-shadow: inset 0 1px 0 var(--acha-highlight);
-  animation: acha-fade-up 520ms var(--acha-ease) both;
+  animation: acha-fade-up 520ms var(--acha-ease) backwards;
   transition: background 240ms var(--acha-ease), border-color 300ms var(--acha-ease), box-shadow 400ms var(--acha-ease), transform 200ms var(--acha-spring);
 }
 .acha-tile:nth-child(2) { animation-delay: 40ms; }
@@ -1782,8 +1786,17 @@ const _styles_PANEL_TILES = `
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -.005em;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.25;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   transition: color 300ms var(--acha-ease);
+}
+@container acha-panel (max-width: 479px) {
+  .acha-tile-chev { display: none; }
 }
 .acha-tile-chev {
   flex: none;
@@ -1823,7 +1836,7 @@ const _styles_PANEL_TILES = `
   font-size: 13.5px;
   font-weight: 600;
   --mdc-icon-size: 18px;
-  animation: acha-fade-up 400ms var(--acha-ease) both;
+  animation: acha-fade-up 400ms var(--acha-ease) backwards;
 }
 .acha-banner[hidden] { display: none; }
 
@@ -1889,9 +1902,20 @@ const _styles_PANEL_RESPONSIVE = `
   .acha-step-btn { width: 48px; height: 48px; --mdc-icon-size: 22px; }
   .acha-step-mid { min-width: 64px; }
   .acha-tiles { gap: 8px; }
-  .acha-tile { min-height: 60px; padding: 10px; gap: 9px; border-radius: 17px; }
+  /* ~115px tiles: stack icon above text so labels/values get the full tile width */
+  .acha-tile { flex-direction: column; align-items: flex-start; justify-content: flex-start; min-height: 92px; padding: 10px; gap: 8px; border-radius: 17px; }
   .acha-tile-icon { width: 36px; height: 36px; border-radius: 12px; --mdc-icon-size: 19px; }
-  .acha-tile-value { font-size: 14px; }
+  .acha-tile-text { width: 100%; flex: none; }
+  .acha-tile-value {
+    font-size: 14px;
+    line-height: 1.25;
+    white-space: normal;
+    overflow-wrap: break-word;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
   .acha-tile-chev { display: none; }
   .acha-chip { height: 30px; padding: 0 10px 0 8px; font-size: 12px; }
   .acha-chip-label { display: none; }
@@ -1905,6 +1929,28 @@ const _styles_PANEL_RESPONSIVE = `
   .acha-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 `;
+
+/*
+ * Registered custom properties (@property is ignored inside shadow roots, so this is done in JS):
+ * - --acha-accent as <color> so `transition: --acha-accent 600ms` really interpolates every accent gradient;
+ * - --acha-drag / --acha-index non-inheriting, so swipe updates on .acha-track don't restyle the whole subtree.
+ */
+function _styles_registerProps() {
+  if (typeof CSS === 'undefined' || typeof CSS.registerProperty !== 'function') return;
+  const defs = [
+    { name: '--acha-accent', syntax: '<color>', inherits: true, initialValue: '#3fa9f5' },
+    { name: '--acha-drag', syntax: '<length>', inherits: false, initialValue: '0px' },
+    { name: '--acha-index', syntax: '<number>', inherits: false, initialValue: '0' },
+  ];
+  for (const d of defs) {
+    try {
+      CSS.registerProperty(d);
+    } catch (e) {
+      /* already registered (second bundle copy) or unsupported */
+    }
+  }
+}
+_styles_registerProps();
 
 const ACHA_CARD_CSS = _styles_TOKENS + _styles_CARD_BASE + _styles_CARD_SWITCHER + _styles_KEYFRAMES + _styles_REDUCED_MOTION;
 
@@ -1961,7 +2007,7 @@ svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible
 .s1 { stop-color: color-mix(in srgb, var(--_d-accent) 55%, #fff); transition: stop-color 600ms var(--_d-ease); }
 .cur { fill: var(--_d-text); opacity: .9; transition: opacity 300ms var(--_d-ease); }
 .cur-ring { fill: none; stroke: var(--_d-text); stroke-width: 1.5; opacity: .28; }
-.hit { fill: none; stroke: transparent; stroke-width: 58; stroke-linecap: round; pointer-events: stroke; touch-action: none; cursor: pointer; }
+.hit { fill: none; stroke: transparent; stroke-width: 36; stroke-linecap: round; pointer-events: stroke; touch-action: none; cursor: pointer; }
 .thumb { cursor: grab; touch-action: none; outline: none; transition: opacity 300ms var(--_d-ease); }
 .thumb.grab { cursor: grabbing; }
 .knob {
@@ -2288,6 +2334,24 @@ class AchaDial extends HTMLElement {
     return clamp(roundToStep(v, this._p.step), lo, hi);
   }
 
+  /**
+   * Grid used to *display* values: the step when the setpoints sit on it, else the finest of 0.5 / 0.1 they
+   * fit (HA core daikin reports step 1 but holds 22.5). Snapping to `step` stays in drag / keyboard only.
+   */
+  _dispStep() {
+    const p = this._p;
+    const vals = (p.dual ? [p.low, p.high] : [p.value]).filter((v) => v !== null);
+    const on = (g) => vals.every((v) => Math.abs(roundToStep(v, g) - v) < 1e-6);
+    for (const g of [p.step, 1, 0.5, 0.1]) if (g <= p.step && on(g)) return g;
+    return Math.min(p.step, 0.1);
+  }
+
+  /** Display value on the display grid (no clamping to the step grid). */
+  _disp(v, ds) {
+    const [lo, hi] = this._range();
+    return clamp(roundToStep(v, ds), lo, hi);
+  }
+
   // ---------------------------------------------------------------- tween (arc + count-up number)
   _targets() {
     const [lo, hi] = this._range();
@@ -2405,18 +2469,29 @@ class AchaDial extends HTMLElement {
     }
 
     // centre
-    const step = p.step;
+    const ds = this._dispStep();
+    // Fractional grids keep a stable decimal slot ('22.0' / '22.5') so the big integer never shifts sideways.
+    const fracGrid = Math.abs(ds % 1) > 1e-9;
+    const fmt = (v) => {
+      const ft = formatTemp(v === null ? null : this._disp(v, ds), ds);
+      if (fracGrid && ft.value !== null) {
+        const n = (String(ds).split('.')[1] || '0').length;
+        ft.dec = '.' + ft.dec.slice(1).padEnd(n, '0');
+        ft.text = ft.int + ft.dec;
+      }
+      return ft;
+    };
     const setText = (node, txt) => {
       const v = txt === null || txt === undefined ? '' : String(txt);
       if (node.textContent !== v) node.textContent = v;
     };
     setText(el.label, p.label);
     if (dual) {
-      setText(el.lo, formatTemp(this._snap(s.low), step).text);
-      setText(el.hi, formatTemp(this._snap(s.high), step).text);
+      setText(el.lo, fmt(s.low).text);
+      setText(el.hi, fmt(s.high).text);
       setText(el.u, p.unit);
     } else {
-      const ft = formatTemp(s.value === null ? null : this._snap(s.value), step);
+      const ft = fmt(s.value);
       setText(el.int, ft.int);
       setText(el.dec, ft.dec);
       setText(el.unit, s.value === null ? '' : p.unit);
@@ -2436,8 +2511,8 @@ class AchaDial extends HTMLElement {
     // a11y
     const [lo, hi] = this._range();
     const aria = (g, val, which) => {
-      const now = val === null ? '' : String(this._snap(val));
-      const txt = val === null ? '--' : formatTemp(this._snap(val), step).text + ' ' + p.unit;
+      const now = val === null ? '' : String(this._disp(val, ds));
+      const txt = val === null ? '--' : formatTemp(this._disp(val, ds), ds).text + ' ' + p.unit;
       const name = [p.name, which].filter(Boolean).join(' · ') || p.label || 'Setpoint';
       const attrs = {
         'aria-valuemin': String(lo),
@@ -2492,21 +2567,69 @@ class AchaDial extends HTMLElement {
         which = dl < dh || (dl === dh && deg0 < this._angleOf(p.low)) ? 'low' : 'high';
       }
     }
-    this._drag = { id: ev.pointerId, which, start: { value: p.value, low: p.low, high: p.high }, lastDeg: null };
+    // Touch on the ring (not a thumb) is only *armed*: it must move along the ring to drag, or be a clean tap.
+    // A swipe that merely starts on the ring never jumps the setpoint.
+    const armed = ev.pointerType === 'touch' && ev.currentTarget === this._el.hit;
+    this._drag = { id: ev.pointerId, which, start: { value: p.value, low: p.low, high: p.high }, lastDeg: null, armed, x0: ev.clientX, y0: ev.clientY };
     try {
       this._el.svg.setPointerCapture(ev.pointerId);
     } catch (e) {
       /* capture unsupported */
     }
-    const thumb = which === 'high' ? this._el.t1 : this._el.t0;
-    thumb.classList.add('grab');
+    if (armed) return;
+    this._grab();
     this._dragTo(this._degFromEvent(ev));
+  }
+
+  _grab() {
+    const d = this._drag;
+    if (!d) return;
+    d.armed = false;
+    (d.which === 'high' ? this._el.t1 : this._el.t0).classList.add('grab');
+  }
+
+  /** Armed touch: 'drag' once it moved > 8px along the ring, 'abort' when it went mostly radial, else null. */
+  _armedIntent(ev) {
+    const d = this._drag;
+    const rect = this._el.svg.getBoundingClientRect();
+    const rx = d.x0 - (rect.left + rect.width / 2);
+    const ry = d.y0 - (rect.top + rect.height / 2);
+    const len = Math.hypot(rx, ry) || 1;
+    const mx = ev.clientX - d.x0;
+    const my = ev.clientY - d.y0;
+    const radial = Math.abs((mx * rx + my * ry) / len);
+    const tangential = Math.abs((mx * ry - my * rx) / len);
+    if (tangential > 8 && tangential >= radial) return 'drag';
+    if (radial > 12) return 'abort';
+    return null;
+  }
+
+  _cancelDrag() {
+    const d = this._drag;
+    this._drag = null;
+    if (!d) return;
+    try {
+      if (this._el.svg.hasPointerCapture && this._el.svg.hasPointerCapture(d.id)) this._el.svg.releasePointerCapture(d.id);
+    } catch (e) {
+      /* already released */
+    }
+    this._el.t0.classList.remove('grab');
+    this._el.t1.classList.remove('grab');
   }
 
   _onMove(ev) {
     const d = this._drag;
     if (!d || ev.pointerId !== d.id) return;
     if (ev.cancelable) ev.preventDefault();
+    if (d.armed) {
+      const intent = this._armedIntent(ev);
+      if (intent === 'abort') {
+        this._cancelDrag();
+        return;
+      }
+      if (intent !== 'drag') return;
+      this._grab();
+    }
     const deg = this._degFromEvent(ev);
     if (deg !== null) this._dragTo(deg);
   }
@@ -2534,6 +2657,15 @@ class AchaDial extends HTMLElement {
   _onUp(ev) {
     const d = this._drag;
     if (!d || (ev && ev.pointerId !== d.id)) return;
+    if (d.armed) {
+      // never moved along the ring: a clean tap sets the value there; a cancelled gesture changes nothing
+      if (!ev || ev.type !== 'pointerup') {
+        this._cancelDrag();
+        return;
+      }
+      this._grab();
+      this._dragTo(this._degFromEvent(ev));
+    }
     this._drag = null;
     try {
       if (this._el.svg.hasPointerCapture && this._el.svg.hasPointerCapture(d.id)) this._el.svg.releasePointerCapture(d.id);
@@ -2556,21 +2688,26 @@ class AchaDial extends HTMLElement {
     const cur = p[which];
     if (cur === null) return;
     const [lo, hi] = this._range();
+    // n grid steps strictly in one direction from cur (an off-grid 22.5 with step 1: up → 23, down → 22)
+    const move = (n) => {
+      const k = n > 0 ? Math.floor(cur / p.step + 1e-9) + n : Math.ceil(cur / p.step - 1e-9) + n;
+      return k * p.step;
+    };
     let next = null;
     switch (ev.key) {
       case 'ArrowUp':
       case 'ArrowRight':
-        next = cur + p.step;
+        next = move(1);
         break;
       case 'ArrowDown':
       case 'ArrowLeft':
-        next = cur - p.step;
+        next = move(-1);
         break;
       case 'PageUp':
-        next = cur + p.step * 4;
+        next = move(4);
         break;
       case 'PageDown':
-        next = cur - p.step * 4;
+        next = move(-4);
         break;
       case 'Home':
         next = lo;
@@ -3391,9 +3528,6 @@ const ACHA_SHEET_CSS = `
   to { transform: scale(26); opacity: 0; }
 }
 
-:host([data-theme="light"]) .backdrop,
-:host-context([data-theme="light"]) .backdrop { background: var(--acha-sheet-backdrop, rgba(30, 40, 60, .22)); }
-
 @media (prefers-reduced-motion: reduce) {
   .sheet, :host([data-state="closing"]) .sheet { transition: opacity 160ms ease; transform: none !important; opacity: 0; }
   :host([data-state="opening"]) .sheet, :host([data-state="open"]) .sheet { opacity: 1; }
@@ -3561,6 +3695,15 @@ class AchaSheet extends HTMLElement {
     this._setState('open');
     this._bindWindow();
     this._focusInitial();
+    // Tall panels (phone): the sheet sits at the panel bottom, which may be below the fold.
+    clearTimeout(this._revealTimer);
+    this._revealTimer = setTimeout(() => {
+      if (!this.isOpen) return;
+      const r = this._sheetEl.getBoundingClientRect();
+      if (r.bottom > window.innerHeight || r.top < 0) {
+        this._sheetEl.scrollIntoView({ block: 'nearest', behavior: _sheet_reduced() ? 'auto' : 'smooth' });
+      }
+    }, 60);
     this.dispatchEvent(new CustomEvent('acha-sheet-open', {
       bubbles: true, composed: true, detail: { title: this._titleEl.textContent },
     }));
@@ -4140,8 +4283,9 @@ class AchaPanel extends HTMLElement {
     iconBox.appendChild(icon);
     const titles = _panel_el('div', 'acha-p-titles');
     const name = _panel_el('h3', 'acha-p-name');
-    const status = _panel_el('div', 'acha-p-status', { 'aria-live': 'polite' });
-    const statusMain = _panel_el('b');
+    const status = _panel_el('div', 'acha-p-status');
+    // Only the mode/action text is live; temperatures change on every sensor update and must not be announced.
+    const statusMain = _panel_el('b', '', { 'aria-live': 'polite' });
     const statusRest = _panel_el('span');
     status.append(statusMain, statusRest);
     titles.append(name, status);
@@ -4302,11 +4446,20 @@ class AchaPanel extends HTMLElement {
 
     // setpoint
     const step = prof.userStep || numAttr(st, 'target_temp_step') || prof.step || 0.5;
-    let min = cfg.min_temp !== undefined ? Number(cfg.min_temp) : numAttr(st, 'min_temp');
-    let max = cfg.max_temp !== undefined ? Number(cfg.max_temp) : numAttr(st, 'max_temp');
-    if (!Number.isFinite(min)) min = unit === '°F' ? 61 : 16;
-    if (!Number.isFinite(max)) max = unit === '°F' ? 86 : 30;
-    if (min > max) [min, max] = [max, min];
+    // Card limits only narrow the entity's own range (HA rejects values outside it: temp_out_of_range).
+    const aMin = numAttr(st, 'min_temp');
+    const aMax = numAttr(st, 'max_temp');
+    const cMin = cfg.min_temp !== undefined && Number.isFinite(Number(cfg.min_temp)) ? Number(cfg.min_temp) : null;
+    const cMax = cfg.max_temp !== undefined && Number.isFinite(Number(cfg.max_temp)) ? Number(cfg.max_temp) : null;
+    let min = cMin !== null ? (aMin !== null ? Math.max(cMin, aMin) : cMin) : aMin;
+    let max = cMax !== null ? (aMax !== null ? Math.min(cMax, aMax) : cMax) : aMax;
+    if (min === null || !Number.isFinite(min)) min = unit === '°F' ? 61 : 16;
+    if (max === null || !Number.isFinite(max)) max = unit === '°F' ? 86 : 30;
+    if (min > max) {
+      // Card range does not overlap the entity's: fall back to the entity range (never offer rejected values).
+      if (aMin !== null && aMax !== null && aMin <= aMax) [min, max] = [aMin, aMax];
+      else [min, max] = [max, min];
+    }
     let target = numAttr(st, 'temperature');
     let low = numAttr(st, 'target_temp_low');
     let high = numAttr(st, 'target_temp_high');
@@ -4431,7 +4584,8 @@ class AchaPanel extends HTMLElement {
     // power button
     e.power.hidden = vm.hide.includes('power_btn');
     e.power.classList.toggle('on', vm.on);
-    _panel_prop(e.power, 'disabled', vm.unavailable);
+    const canOff = supports(st, SUPPORT.TURN_OFF) || vm.modes.includes('off');
+    _panel_prop(e.power, 'disabled', vm.unavailable || (vm.on && !canOff));
     const powerLabel = vm.on ? L('ui.turn_off') : L('ui.turn_on');
     _panel_attr(e.power, 'aria-label', powerLabel);
     _panel_attr(e.power, 'aria-pressed', vm.on ? 'true' : 'false');
@@ -4690,9 +4844,11 @@ class AchaPanel extends HTMLElement {
     const st = vm.st;
     const modes = vm.modes;
     if (vm.on) {
+      // turn_off needs bit 128; otherwise only an 'off' hvac mode can switch it off.
+      if (supports(st, SUPPORT.TURN_OFF)) this._call('turn_off');
+      else if (modes.includes('off')) this._call('set_hvac_mode', { hvac_mode: 'off' });
+      else return;
       this._powerPending = { on: false, until: Date.now() + PANEL_OPT_MS };
-      if (supports(st, SUPPORT.TURN_OFF) || !modes.includes('off')) this._call('turn_off');
-      else this._call('set_hvac_mode', { hvac_mode: 'off' });
     } else {
       this._powerPending = { on: true, until: Date.now() + PANEL_OPT_MS };
       if (supports(st, SUPPORT.TURN_ON)) this._call('turn_on');
@@ -4734,7 +4890,11 @@ class AchaPanel extends HTMLElement {
     else this._call('set_temperature', { temperature: pt.value });
   }
 
-  /** ± buttons: one step on press, auto-repeat while held; keyboard click = one step. */
+  /**
+   * ± buttons: one step on press, auto-repeat while held; keyboard click = one step.
+   * Touch defers the first step to pointerup (or the hold timer), so a scroll / tab swipe that starts on a
+   * button (pointercancel) never changes the setpoint. Mouse and pen step immediately.
+   */
   _bindStepper(btn, dir) {
     btn.addEventListener('pointerdown', (ev) => {
       if (btn.disabled || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
@@ -4746,15 +4906,38 @@ class AchaPanel extends HTMLElement {
       }
       this._stopRepeat();
       btn.classList.add('pressed');
-      this._stepBy(dir);
-      const timer = setTimeout(() => {
-        this._repeat.interval = setInterval(() => {
+      const deferred = ev.pointerType === 'touch';
+      const r = { btn, timer: 0, interval: 0, deferred, stepped: false };
+      if (!deferred) {
+        this._stepBy(dir);
+        r.stepped = true;
+      }
+      r.timer = setTimeout(() => {
+        if (this._repeat !== r) return;
+        if (!r.stepped) {
+          r.stepped = true;
+          if (!this._stepBy(dir)) {
+            this._stopRepeat();
+            return;
+          }
+        }
+        r.interval = setInterval(() => {
           if (!this._stepBy(dir)) this._stopRepeat();
         }, PANEL_REPEAT_EVERY);
       }, PANEL_REPEAT_DELAY);
-      this._repeat = { btn, timer, interval: 0 };
+      this._repeat = r;
     });
-    for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) btn.addEventListener(type, this._stopRepeat);
+    btn.addEventListener('pointerup', () => {
+      const r = this._repeat;
+      if (r && r.btn === btn && r.deferred && !r.stepped) {
+        r.stepped = true;
+        this._stopRepeat();
+        this._stepBy(dir); // a clean touch tap = one step
+        return;
+      }
+      this._stopRepeat();
+    });
+    for (const type of ['pointercancel', 'lostpointercapture']) btn.addEventListener(type, this._stopRepeat);
     btn.addEventListener('click', (ev) => {
       if (ev.detail === 0) this._stepBy(dir); // keyboard activation
     });
@@ -4775,17 +4958,21 @@ class AchaPanel extends HTMLElement {
     const vm = this._vm;
     if (!vm || !vm.canSetTemp) return false;
     const step = vm.step;
-    const snap = (v) => clamp(roundToStep(v, step), vm.min, vm.max);
+    // Next grid value strictly in the pressed direction (an off-grid 22.5 with step 1 → 23 / 22).
+    const snap = (v) => {
+      const k = dir > 0 ? Math.floor(v / step + 1e-9) + 1 : Math.ceil(v / step - 1e-9) - 1;
+      return clamp(roundToStep(k * step, step), vm.min, vm.max);
+    };
     let detail;
     if (vm.dual) {
-      const low = snap(vm.low + dir * step);
-      const high = snap(vm.high + dir * step);
+      const low = snap(vm.low);
+      const high = snap(vm.high);
       if (high - low < step / 2 || (low === vm.low && high === vm.high)) return false;
       detail = { low, high };
     } else {
       if (vm.target === null) return false;
-      const value = snap(vm.target + dir * step);
-      if (value === vm.target) return false;
+      const value = snap(vm.target);
+      if (dir > 0 ? value <= vm.target : value >= vm.target) return false;
       detail = { value };
     }
     _panel_haptic(5);
@@ -5075,7 +5262,7 @@ class AchaCardEditor extends HTMLElement {
     this._hass = hass;
     for (const f of this._forms) if (f && f.tagName === 'HA-FORM') f.hass = hass;
     const lang = this._langNow();
-    if (lang !== this._lang) this._render();
+    if (lang !== this._lang || this._unitNow() !== this._unit) this._render();
   }
 
   get hass() {
@@ -5114,6 +5301,12 @@ class AchaCardEditor extends HTMLElement {
     }
   }
 
+  /** '°F' on Fahrenheit installs, else '°C' (drives the min/max number bounds). */
+  _unitNow() {
+    const u = this._hass && this._hass.config && this._hass.config.unit_system && this._hass.config.unit_system.temperature;
+    return u === '°F' ? '°F' : '°C';
+  }
+
   _L(key, vars) {
     return t(this._lang, key, vars);
   }
@@ -5149,6 +5342,9 @@ class AchaCardEditor extends HTMLElement {
       selector: { entity: { filter: deviceClass ? { domain: 'sensor', device_class: deviceClass } : { domain: 'sensor' } } },
     });
     const num = (name, min, max, step) => ({ name, selector: { number: { min, max, step, mode: 'box' } } });
+    const fahrenheit = this._unitNow() === '°F';
+    const tMin = fahrenheit ? 40 : 5;
+    const tMax = fahrenheit ? 104 : 40;
     return [
       { name: 'entity', required: true, selector: { entity: { filter: { domain: 'climate' } } } },
       { type: 'grid', name: '', schema: [{ name: 'name', selector: { text: {} } }, { name: 'icon', selector: { icon: {} } }] },
@@ -5157,7 +5353,7 @@ class AchaCardEditor extends HTMLElement {
         name: '',
         schema: [sensor('indoor_temperature', 'temperature'), sensor('outdoor_temperature', 'temperature'), sensor('humidity', 'humidity'), sensor('power')],
       },
-      { type: 'grid', name: '', schema: [num('min_temp', 5, 40, 0.5), num('max_temp', 5, 40, 0.5), num('step', 0.1, 5, 0.1)] },
+      { type: 'grid', name: '', schema: [num('min_temp', tMin, tMax, 0.5), num('max_temp', tMin, tMax, 0.5), num('step', 0.1, 5, 0.1)] },
       {
         name: 'hide',
         selector: { select: { multiple: true, mode: 'list', options: EDITOR_HIDE_KEYS.map((k) => ({ value: k, label: this._L('editor.hide_' + k) })) } },
@@ -5172,8 +5368,9 @@ class AchaCardEditor extends HTMLElement {
   _render() {
     if (!this._config) return;
     this._lang = this._langNow();
+    this._unit = this._unitNow();
     const n = this._config.entities.length;
-    const structure = [this._loading, this._haForm, this._lang, n].join('|');
+    const structure = [this._loading, this._haForm, this._lang, this._unit, n].join('|');
     if (structure !== this._structure || !this._ui) {
       this._structure = structure;
       this._build();
@@ -5757,12 +5954,19 @@ function _card_currentTemp(hass, entry, st) {
   return numAttr(st, 'current_temperature');
 }
 
-/** Turn one climate entity off using the best available service. */
+/** True when some service can switch this climate off (turn_off needs bit 128, else an 'off' hvac mode). */
+function _card_canTurnOff(st) {
+  const modes = (st && st.attributes && st.attributes.hvac_modes) || [];
+  return supports(st, SUPPORT.TURN_OFF) || (Array.isArray(modes) && modes.includes('off'));
+}
+
+/** Turn one climate entity off using the best available service (null when none applies). */
 function _card_turnOff(hass, st) {
   const id = st.entity_id;
   const modes = (st.attributes && st.attributes.hvac_modes) || [];
-  if (supports(st, SUPPORT.TURN_OFF) || !modes.includes('off')) return callClimate(hass, 'turn_off', id);
-  return callClimate(hass, 'set_hvac_mode', id, { hvac_mode: 'off' });
+  if (supports(st, SUPPORT.TURN_OFF)) return callClimate(hass, 'turn_off', id);
+  if (Array.isArray(modes) && modes.includes('off')) return callClimate(hass, 'set_hvac_mode', id, { hvac_mode: 'off' });
+  return null;
 }
 
 /** Entity ids whose state affects one panel (climate + optional sensors + extras). */
@@ -6173,6 +6377,7 @@ class AchaCard extends HTMLElement {
     if (instant) r.track.classList.add('dragging');
     r.track.style.setProperty('--acha-index', tabs ? String(idx) : '0');
     r.track.style.setProperty('--acha-drag', '0px');
+    r.track.style.transform = ''; // drop the inline drag transform: the CSS transition springs to the index
     if (instant) {
       void r.track.offsetWidth; // commit the jump before re-enabling the transition
       r.track.classList.remove('dragging');
@@ -6286,6 +6491,7 @@ class AchaCard extends HTMLElement {
       horizontal: false,
       captured: false,
       width: this._root.viewport.clientWidth || 1,
+      trackW: this._root.track.offsetWidth || this._root.viewport.clientWidth || 1,
       samples: [{ x: ev.clientX, t: ev.timeStamp || performance.now() }],
     };
   }
@@ -6318,7 +6524,8 @@ class AchaCard extends HTMLElement {
     d.dx = dx;
     d.samples.push({ x: ev.clientX, t: ev.timeStamp || performance.now() });
     if (d.samples.length > 6) d.samples.shift();
-    this._root.track.style.setProperty('--acha-drag', offset.toFixed(1) + 'px');
+    // Write the transform itself (not an inherited custom property): no style recalc of every panel per move.
+    this._root.track.style.transform = `translate3d(${(-this._index * d.trackW + offset).toFixed(1)}px, 0, 0)`;
   }
 
   _onPointerUp(ev) {
@@ -6389,14 +6596,14 @@ class AchaCard extends HTMLElement {
     if (!hass || this._busyOff) return;
     const targets = this._recs
       .map((rec) => stateObj(hass, rec.entry.entity))
-      .filter((st) => st && isOn(st));
+      .filter((st) => st && isOn(st) && _card_canTurnOff(st));
     if (!targets.length) return;
     _card_haptic(12);
     this._busyOff = true;
     const btn = this._root.allOff;
     btn.setAttribute('aria-busy', 'true');
     const calls = targets.map((st) =>
-      _card_turnOff(hass, st).catch((err) => {
+      Promise.resolve(_card_turnOff(hass, st)).catch((err) => {
         console.error('[acha-card] turn off failed for', st.entity_id, err);
       })
     );

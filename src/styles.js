@@ -696,8 +696,17 @@ const _styles_PANEL_TILES = `
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -.005em;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.25;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   transition: color 300ms var(--acha-ease);
+}
+@container acha-panel (max-width: 479px) {
+  .acha-tile-chev { display: none; }
 }
 .acha-tile-chev {
   flex: none;

@@ -431,6 +431,15 @@ export class AchaSheet extends HTMLElement {
     this._setState('open');
     this._bindWindow();
     this._focusInitial();
+    // Tall panels (phone): the sheet sits at the panel bottom, which may be below the fold.
+    clearTimeout(this._revealTimer);
+    this._revealTimer = setTimeout(() => {
+      if (!this.isOpen) return;
+      const r = this._sheetEl.getBoundingClientRect();
+      if (r.bottom > window.innerHeight || r.top < 0) {
+        this._sheetEl.scrollIntoView({ block: 'nearest', behavior: _sheet_reduced() ? 'auto' : 'smooth' });
+      }
+    }, 60);
     this.dispatchEvent(new CustomEvent('acha-sheet-open', {
       bubbles: true, composed: true, detail: { title: this._titleEl.textContent },
     }));
