@@ -13,6 +13,12 @@ e **Daikin Onecta**.
 - Temas escuro (vidro) e claro (estilo Onecta), `auto` segue o modo escuro do Home Assistant.
 - Português (pt-PT) e inglês. Respeita `prefers-reduced-motion`. Sem dependências externas.
 
+## Preview
+
+<img width="297" height="605" alt="image" src="https://github.com/user-attachments/assets/d6b3c6cb-bc26-4ccf-8370-faad986951e0" />
+<img width="308" height="607" alt="image" src="https://github.com/user-attachments/assets/69a0b687-6c18-4ab8-9842-dd30b9479d02" />
+
+
 ## Instalação
 
 ### HACS (repositório personalizado)
