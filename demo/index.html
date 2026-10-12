@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ACHA Card Demo</title>
+<style>
+  :root {
+    --demo-bg: #0d1016;
+    --demo-text: #eef2f8;
+    --demo-muted: rgba(226, 232, 245, .62);
+    --demo-glass: rgba(18, 21, 29, .62);
+    --demo-border: rgba(255, 255, 255, .1);
+    --demo-input: rgba(255, 255, 255, .07);
+    --primary-text-color: #eef2f8;
+    --secondary-text-color: rgba(226, 232, 245, .62);
+    --divider-color: rgba(255, 255, 255, .14);
+    --primary-color: #3fa9f5;
+    --card-background-color: #1a1d25;
+    color-scheme: dark;
+  }
+  :root[data-page="light"] {
+    --demo-bg: #e9edf3;
+    --demo-text: #0f172a;
+    --demo-muted: rgba(30, 41, 59, .62);
+    --demo-glass: rgba(255, 255, 255, .62);
+    --demo-border: rgba(15, 23, 42, .1);
+    --demo-input: rgba(255, 255, 255, .8);
+    --primary-text-color: #0f172a;
+    --secondary-text-color: rgba(30, 41, 59, .62);
+    --divider-color: rgba(15, 23, 42, .14);
+    --card-background-color: #ffffff;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    color: var(--demo-text);
+    background: var(--demo-bg);
+    overflow-x: hidden;
+  }
+  /* photo-like blurred dashboard background (pure CSS, no image downloads) */
+  .bg { position: fixed; inset: -10%; z-index: -1; filter: blur(46px) saturate(130%); transform: scale(1.05); }
+  .bg::before, .bg::after { content: ""; position: absolute; inset: 0; }
+  .bg::before {
+    background:
+      radial-gradient(38% 42% at 18% 22%, #c9844f 0%, transparent 70%),
+      radial-gradient(30% 36% at 78% 18%, #2f6f8f 0%, transparent 72%),
+      radial-gradient(42% 40% at 70% 78%, #1d3b5a 0%, transparent 70%),
+      radial-gradient(34% 30% at 30% 80%, #6b4a3a 0%, transparent 70%),
+      radial-gradient(26% 26% at 52% 48%, #8fa3a8 0%, transparent 70%),
+      linear-gradient(160deg, #20242c, #0b0d12);
+  }
+  .bg::after { background: linear-gradient(180deg, rgba(0, 0, 0, .25), rgba(0, 0, 0, .45)); }
+  :root[data-page="light"] .bg::before {
+    background:
+      radial-gradient(38% 42% at 18% 22%, #f2c99a 0%, transparent 70%),
+      radial-gradient(30% 36% at 78% 18%, #a9d3ea 0%, transparent 72%),
+      radial-gradient(42% 40% at 70% 78%, #c7d5e8 0%, transparent 70%),
+      radial-gradient(34% 30% at 30% 80%, #e6cdb8 0%, transparent 70%),
+      radial-gradient(26% 26% at 52% 48%, #ffffff 0%, transparent 70%),
+      linear-gradient(160deg, #f5f1ea, #dfe6ef);
+  }
+  :root[data-page="light"] .bg::after { background: linear-gradient(180deg, rgba(255, 255, 255, .15), rgba(255, 255, 255, .3)); }
+
+  .toolbar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+    padding: 10px 16px;
+    background: var(--demo-glass);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
+    border-bottom: 1px solid var(--demo-border);
+    font-size: 13px;
+  }
+  .toolbar .brand { font-weight: 700; letter-spacing: .02em; margin-right: 6px; }
+  .toolbar .brand small { font-weight: 500; color: var(--demo-muted); margin-left: 6px; }
+  .toolbar label { display: inline-flex; align-items: center; gap: 6px; color: var(--demo-muted); }
+  .toolbar select, .toolbar button {
+    height: 30px; padding: 0 10px; border-radius: 8px;
+    border: 1px solid var(--demo-border); background: var(--demo-input); color: var(--demo-text);
+    font: inherit; font-size: 13px; cursor: pointer;
+  }
+  .toolbar .spacer { flex: 1; }
+  .toolbar a { color: var(--primary-color); text-decoration: none; }
+
+  main { display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; align-items: flex-start; padding: 28px 16px 64px; }
+  .stage { width: 100%; max-width: var(--stage-w, 420px); transition: max-width 400ms cubic-bezier(.22, .8, .24, 1); }
+  .side { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 16px; }
+  .box {
+    padding: 14px 16px; border-radius: 18px;
+    background: var(--demo-glass); border: 1px solid var(--demo-border);
+    -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+    font-size: 13px;
+  }
+  .box h2 { margin: 0 0 10px; font-size: 14px; font-weight: 600; }
+  .log { margin: 0; padding: 0; list-style: none; max-height: 240px; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; line-height: 1.5; }
+  .log li { padding: 3px 0; border-bottom: 1px dashed var(--demo-border); word-break: break-word; }
+  .log li.err { color: #ff6b6b; }
+  .log time { color: var(--demo-muted); margin-right: 6px; }
+  pre.cfg { margin: 0; max-height: 280px; overflow: auto; font-size: 11.5px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; z-index: 20;
+    transform: translate(-50%, 20px); opacity: 0;
+    padding: 10px 16px; border-radius: 999px;
+    background: var(--demo-glass); border: 1px solid var(--demo-border);
+    -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+    font-size: 13px; transition: opacity 250ms, transform 250ms; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .editor-box[hidden] { display: none; }
+  .err-box { color: #ff6b6b; white-space: pre-wrap; }
+  @media (max-width: 520px) { .toolbar .brand small { display: none; } }
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<div class="toolbar">
+  <span class="brand">ACHA Card<small id="src-label"></small></span>
+  <label>Tema <select id="opt-theme"><option value="auto">auto (HA)</option><option value="dark">escuro</option><option value="light">claro</option></select></label>
+  <label>HA modo escuro <select id="opt-dark"><option value="1">sim</option><option value="0">não</option></select></label>
+  <label>Disposição <select id="opt-layout"><option value="tabs">tabs</option><option value="stack">stack</option><option value="grid">grid</option></select></label>
+  <label>Idioma <select id="opt-lang"><option value="auto">auto (hass: pt)</option><option value="pt">pt</option><option value="en">en</option></select></label>
+  <label>Largura <select id="opt-width"><option value="380">telemóvel 380</option><option value="420">420</option><option value="620">tablet 620</option><option value="900">desktop 900</option></select></label>
+  <label>Unidade <select id="opt-unit"><option value="1">mostrar</option><option value="0">ocultar</option></select></label>
+  <label>Quarto <select id="opt-avail"><option value="1">online</option><option value="0">indisponível</option></select></label>
+  <span class="spacer"></span>
+  <button type="button" id="btn-editor">Editor visual</button>
+  <button type="button" id="btn-reset">Repor estado</button>
+  <a id="src-switch" href="#"></a>
+</div>
+<main>
+  <div class="stage" id="stage"></div>
+  <div class="side">
+    <div class="box editor-box" id="editor-box" hidden><h2>Editor (fallback sem ha-form)</h2><div id="editor-slot"></div></div>
+    <div class="box"><h2>Chamadas de serviço</h2><ul class="log" id="log"></ul></div>
+    <div class="box"><h2>Configuração</h2><pre class="cfg" id="cfg"></pre></div>
+  </div>
+</main>
+<div class="toast" id="toast" role="status"></div>
+<script type="module" src="./demo.js"></script>
+</body>
+</html>

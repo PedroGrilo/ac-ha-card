@@ -1,0 +1,29 @@
+{
+  "name": "acha-card",
+  "version": "1.0.0",
+  "description": "ACHA Climate Card — cartão Lovelace para ar condicionado (Daikin / Daikin Onecta / qualquer entidade climate) no Home Assistant.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "main": "dist/acha-card.js",
+  "files": [
+    "dist/acha-card.js"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/build.mjs --check",
+    "demo": "node scripts/serve.mjs 8765"
+  },
+  "keywords": [
+    "home-assistant",
+    "lovelace",
+    "custom-card",
+    "climate",
+    "daikin",
+    "onecta",
+    "hacs"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}
